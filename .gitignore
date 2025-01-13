@@ -1,0 +1,17 @@
+# Ignore local environment files
+*.env
+
+
+# New entries to add
+# Ignore IDE specific files
+.idea/
+.vscode/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+
+
+# Ignore SQLite database files
+*.sqlite3

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">My Library</h1>
+    <div class="text-center mb-3">
+        <a class="btn btn-primary" href="{{ url_for('home') }}">Home</a>
+        <a class="btn btn-success" href="{{ url_for('add_book') }}">Add Book</a>
+        <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    <!-- Book list will be displayed here -->
+    <ul class="list-group">
+        {% for book in books %}
+            <li class="list-group-item">
+                <strong>{{ book.title }}</strong><br>
+                Author: {{ book.author }}<br>
+                Description: {{ book.description }}<br>
+                Date added: {{ book.due_date.strftime('%Y-%m-%d') }}<br>
+                {% if book.is_borrowed %}
+                    <span class="text-warning">Status: Borrowed</span>
+                {% else %}
+                    <span class="text-success">Status: Available</span>
+                {% endif %}
+                <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </li>
+        {% else %}
+            <li class="list-group-item text-danger">No books found in your library.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
