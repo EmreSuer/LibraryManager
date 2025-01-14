@@ -45,9 +45,10 @@ class Book(db.Model):
     title = db.Column(db.String(150), nullable=False)
     author = db.Column(db.String(150), nullable=False)
     genre = db.Column(db.String(150), nullable=False)
-    opinion = db.Column(db.Text, nullable=False)
+    notes = db.Column(db.Text, nullable=False)
     date_book_finished = db.Column(db.DateTime, nullable=False)
     cover_image = db.Column(db.String(255), nullable=True)
+    rating = db.Column(db.Float, nullable=True)
 
     #Foreign key to the user table
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -132,15 +133,30 @@ def add_book():
         author = request.form.get("author")
         genre = request.form.get("genre")  # Get the selected genre
         image_url = request.form.get("image_url")  # Get the image URL
+        rating = request.form.get("rating")  # Get the rating from the form
+
+        # Validate the rating
+        if rating:
+            try:
+                rating = float(rating)
+                if rating < 0 or rating > 10:
+                    flash("Rating must be between 0 and 10.")
+                    return redirect(url_for("add_book"))
+            except ValueError:
+                flash("Invalid rating. Please enter a number between 0 and 10.")
+                return redirect(url_for("add_book"))
+        else:
+            rating = None  # Default to None if no rating is provided
 
         new_book = Book(
             title=title,
             author=author,
             genre=genre,  # Use the selected genre
-            opinion="No opinion available.",  # Default opinion
+            notes="No notes available.",  # Default notes
             date_book_finished=datetime.now(timezone.utc),  # Set the current date
             user_id=current_user.id,  # Associate with the logged-in user
-            cover_image=image_url  # Store the image URL
+            cover_image=image_url,  # Store the image URL
+            rating=rating  # Store the rating
         )
         db.session.add(new_book)
         db.session.commit()
@@ -204,8 +220,8 @@ def add_book_to_library():
 @app.route("/delete_book/<int:book_id>", methods=["POST"])
 @login_required
 def delete_book(book_id):
-    book_to_delete = Book.query.get_or_404(book_id)  # Get the book or return a 404 error
-    if book_to_delete.user_id == current_user.id:  # Ensure the book belongs to the current user
+    book_to_delete = Book.query.get_or_404(book_id)  
+    if book_to_delete.user_id == current_user.id: 
         db.session.delete(book_to_delete)
         db.session.commit()
         flash("Book deleted successfully!")
@@ -220,22 +236,49 @@ def save_notes(book_id):
     notes = request.form.get("notes")
     book = Book.query.get(book_id)
     if book:
-        book.opinion = notes  # Update the opinion field with the new notes
+        book.notes = notes  
         db.session.commit()
         flash("Notes saved successfully!")
     return redirect(url_for("list_books"))
 
 
+@app.route("/edit_book/<int:book_id>", methods=["GET", "POST"])
+@login_required
+def edit_book(book_id):
+    book = Book.query.get(book_id)
+    if request.method == "POST":
+        title = request.form.get("title")
+        author = request.form.get("author")
+        genre = request.form.get("genre")
+        rating = request.form.get("rating")
+
+    
+
+        # Check if required fields are filled
+        if not title or not author or not genre:
+            flash("All fields are required.")
+            return redirect(url_for("edit_book", book_id=book.id))
+
+        # Handle rating input
+        try:
+            book.rating = float(rating) if rating else None  # Convert to float or set to None
+        except ValueError:
+            flash("Invalid rating. Please enter a number between 0 and 10.")
+            return redirect(url_for("edit_book", book_id=book.id))
+
+        # Update the book details
+        book.title = title
+        book.author = author
+        book.genre = genre
+
+        db.session.commit()
+        return redirect(url_for("list_books"))
+    
+    return render_template("edit_book.html", book=book, genres=GENRES)  # Pass genres to the template
 
 
 
-
-
-
-
-
-
-
+    
 if __name__ == "__main__":
 
     with app.app_context():

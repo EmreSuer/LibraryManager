@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Edit Book</h1>
+    <form method="POST" action="{{ url_for('edit_book', book_id=book.id) }}">
+        <div class="form-group">
+            <label for="title">Book Title</label>
+            <input type="text" name="title" class="form-control mb-2" id="title" placeholder="Book Title" value="{{ book.title }}" required>
+        </div>
+        <div class="form-group">
+            <label for="author">Author</label>
+            <input type="text" name="author" class="form-control mb-2" id="author" placeholder="Author" value="{{ book.author }}" required>
+        </div>
+        <div class="form-group">
+            <label for="genre">Genre</label>
+            <select name="genre" class="form-control mb-2" id="genre" required>
+                {% for genre in genres %}
+                    <option value="{{ genre }}" {% if genre == book.genre %}selected{% endif %}>{{ genre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="rating">Rating (0-10)</label>
+            <input type="text" name="rating" class="form-control mb-2" id="rating" placeholder="Rating (0-10)" value="{{ book.rating if book.rating is not none else '' }}">
+        </div>
+        <button type="submit" class="btn btn-primary">Update Book</button>
+    </form>
+</div>
+{% endblock %} 

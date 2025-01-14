@@ -24,6 +24,10 @@
                     Author: {{ book.author }}<br>
                     Date Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}<br>
                     Genre: {{ book.genre }}<br>
+                    Rating: {{ book.rating if book.rating is not none else 'Not rated' }}<br>
+                    <form method="POST" action="{{ url_for('edit_book', book_id=book.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-primary btn-sm">Edit</button>
+                    </form>
                     <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" style="display:inline;">
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                     </form>
@@ -31,7 +35,7 @@
                 <div style="flex: 0 0 33.33%; min-height: 250px;">
                     <strong>Notes:</strong><br>
                     <form method="POST" action="{{ url_for('save_notes', book_id=book.id) }}">
-                        <textarea class="form-control" name="notes" rows="5" placeholder="Write your notes here..." style="background-color: #495057; color: #ffffff; border: 1px solid #6c757d; max-height: 150px; overflow-y: auto;">{{ book.opinion }}</textarea>
+                        <textarea class="form-control" name="notes" rows="5" placeholder="Write your notes here..." style="background-color: #495057; color: #ffffff; border: 1px solid #6c757d; max-height: 150px; overflow-y: auto;">{{ book.notes }}</textarea>
                         <button type="submit" class="btn btn-primary btn-sm mt-2">Save Notes</button>
                     </form>
                 </div>
@@ -41,4 +45,4 @@
         {% endfor %}
     </ul>
 </div>
-{% endblock %}
+{% endblock %} 
