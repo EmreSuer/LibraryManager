@@ -3,9 +3,22 @@
 {% block content %}
 <div class="container mt-4">
     <h1 class="text-center">Add a Book</h1>
-    <form method="GET" action="{{ url_for('search_books') }}" class="form-inline justify-content-center">
-        <input type="text" name="query" class="form-control mr-2" placeholder="Search for a book" required>
-        <input type="submit" class="btn btn-primary" value="Search">
+    <form method="POST" action="{{ url_for('add_book') }}" class="form-inline justify-content-center">
+        <input type="text" name="title" class="form-control mr-2" placeholder="Book Title" required>
+        <input type="text" name="author" class="form-control mr-2" placeholder="Author" required>
+        <input type="text" name="publisher" class="form-control mr-2" placeholder="Publisher" required>
+        <input type="text" name="year" class="form-control mr-2" placeholder="Year" required>
+        <input type="text" name="image_url" class="form-control mr-2" placeholder="Image URL (optional)">
+        <input type="submit" class="btn btn-primary" value="Add Book">
+        <div class="form-group mr-2">
+            <label for="genre">Genre</label>
+            <select class="form-control" id="genre" name="genre" required>
+                <option value="">Select a genre</option>
+                {% for genre in genres %}
+                    <option value="{{ genre }}">{{ genre }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </form>
 </div>
 {% endblock %}

@@ -37,8 +37,7 @@ class User(UserMixin, db.Model):
 
     #Relationship to the Book table
     books = db.relationship('Book', backref='user', lazy=True)
-    #Relationship to the Transaction table
-    transactions = db.relationship('Transaction', backref='user', lazy=True)
+
 
 
 class Book(db.Model):
@@ -46,28 +45,12 @@ class Book(db.Model):
     title = db.Column(db.String(150), nullable=False)
     author = db.Column(db.String(150), nullable=False)
     genre = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    due_date = db.Column(db.DateTime, nullable=False)
-    is_borrowed = db.Column(db.Boolean, nullable=True, default=False)
-    is_returned = db.Column(db.Boolean, nullable=True, default=False)  
+    opinion = db.Column(db.Text, nullable=False)
+    date_book_finished = db.Column(db.DateTime, nullable=False)
+    cover_image = db.Column(db.String(255), nullable=True)
 
     #Foreign key to the user table
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    #Relationship to the Transaction table
-    transactions = db.relationship('Transaction', backref='book', lazy=True)
-
-
-class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    is_returned = db.Column(db.Boolean, nullable=True, default=False)
-    borrow_date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
-    return_date = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.String(150), nullable=True, default="Borrowed")
-
-
 
 
 
@@ -138,46 +121,32 @@ def register():
 
 
 
+# Add a list of predefined genres
+GENRES = ["Romance", "Action", "Adventure", "Science Fiction", "Fantasy", "Mystery", "Non-Fiction"]
+
 @app.route("/add_book", methods=["GET", "POST"])
 @login_required
 def add_book():
     if request.method == "POST":
         title = request.form.get("title")
         author = request.form.get("author")
-        publisher = request.form.get("publisher")
-        year = request.form.get("year")
-        
-        # Call Open Library API to search for book details
-        try:
-            response = requests.get(f"https://openlibrary.org/search.json?title={title}&author={author}&publisher={publisher}&year={year}")
-            response.raise_for_status()  # Raise an error for bad responses (4xx or 5xx)
-            data = response.json()
-        except requests.exceptions.RequestException as e:
-            flash(f"An error occurred while contacting the Open Library API: {e}")  # Log the error message
-            return redirect(url_for("add_book"))
-        except ValueError:
-            flash("Received invalid response from the Open Library API.")
-            return redirect(url_for("add_book"))
-        
-        if data['docs']:
-            book_data = data['docs'][0]  # Get the first result
-            new_book = Book(
-                title=book_data.get('title', title),
-                author=book_data.get('author_name', [author])[0],
-                genre=book_data.get('subject', ['Unknown'])[0],  # Default to 'Unknown' if no genre
-                description=book_data.get('first_sentence', ['No description available.'])[0],  # Default description
-                due_date=datetime.now(timezone.utc),  # Set a default due date
-                user_id=current_user.id,  # Associate with the logged-in user
-                cover_image=book_data.get('cover_i', None)
-            )
-            db.session.add(new_book)
-            db.session.commit()
-            flash("Book added successfully!")
-            return redirect(url_for("list_books"))
-        else:
-            flash("No book found with the provided details.")
-            return redirect(url_for("add_book"))
-    return render_template("add_book.html")
+        genre = request.form.get("genre")  # Get the selected genre
+        image_url = request.form.get("image_url")  # Get the image URL
+
+        new_book = Book(
+            title=title,
+            author=author,
+            genre=genre,  # Use the selected genre
+            opinion="No opinion available.",  # Default opinion
+            date_book_finished=datetime.now(timezone.utc),  # Set the current date
+            user_id=current_user.id,  # Associate with the logged-in user
+            cover_image=image_url  # Store the image URL
+        )
+        db.session.add(new_book)
+        db.session.commit()
+        flash("Book added successfully!")
+        return redirect(url_for("list_books"))
+    return render_template("add_book.html", genres=GENRES)  # Pass genres to the template
 
 
 @app.route("/search_books", methods=["GET"])
@@ -242,6 +211,18 @@ def delete_book(book_id):
         flash("Book deleted successfully!")
     else:
         flash("You do not have permission to delete this book.")
+    return redirect(url_for("list_books"))
+
+
+@app.route("/save_notes/<int:book_id>", methods=["POST"])
+@login_required
+def save_notes(book_id):
+    notes = request.form.get("notes")
+    book = Book.query.get(book_id)
+    if book:
+        book.opinion = notes  # Update the opinion field with the new notes
+        db.session.commit()
+        flash("Notes saved successfully!")
     return redirect(url_for("list_books"))
 
 

@@ -11,19 +11,30 @@
     <!-- Book list will be displayed here -->
     <ul class="list-group">
         {% for book in books %}
-            <li class="list-group-item">
-                <strong>{{ book.title }}</strong><br>
-                Author: {{ book.author }}<br>
-                Description: {{ book.description }}<br>
-                Date added: {{ book.due_date.strftime('%Y-%m-%d') }}<br>
-                {% if book.is_borrowed %}
-                    <span class="text-warning">Status: Borrowed</span>
-                {% else %}
-                    <span class="text-success">Status: Available</span>
-                {% endif %}
-                <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
+            <li class="list-group-item d-flex align-items-start" style="background-color: #495057; color: #ffffff; min-height: 300px;">
+                <div class="me-3" style="flex: 0 0 33.33%; min-height: 250px;">
+                    {% if book.cover_image %}
+                        <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="max-width: 100%; max-height: 250px;">
+                    {% else %}
+                        <img src="path/to/placeholder-icon.png" alt="No image available" style="max-width: 100%; max-height: 250px;">
+                    {% endif %}
+                </div>
+                <div class="me-3" style="flex: 0 0 33.33%; min-height: 250px;">
+                    <strong>{{ book.title }}</strong><br>
+                    Author: {{ book.author }}<br>
+                    Date Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}<br>
+                    Genre: {{ book.genre }}<br>
+                    <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </div>
+                <div style="flex: 0 0 33.33%; min-height: 250px;">
+                    <strong>Notes:</strong><br>
+                    <form method="POST" action="{{ url_for('save_notes', book_id=book.id) }}">
+                        <textarea class="form-control" name="notes" rows="5" placeholder="Write your notes here..." style="background-color: #495057; color: #ffffff; border: 1px solid #6c757d; max-height: 150px; overflow-y: auto;">{{ book.opinion }}</textarea>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Save Notes</button>
+                    </form>
+                </div>
             </li>
         {% else %}
             <li class="list-group-item text-danger">No books found in your library.</li>
