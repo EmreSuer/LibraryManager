@@ -22,7 +22,11 @@
                 <div class="me-3" style="flex: 0 0 33.33%; min-height: 250px;">
                     <strong>{{ book.title }}</strong><br>
                     Author: {{ book.author }}<br>
-                    Date Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}<br>
+                    {% if book.date_book_finished %}
+                        <p>Date Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}</p>
+                    {% else %}
+                        <p>Date Finished: Not available</p>
+                    {% endif %}
                     Genre: {{ book.genre }}<br>
                     Rating: {{ book.rating if book.rating is not none else 'Not rated' }}<br>
                     <form method="POST" action="{{ url_for('edit_book', book_id=book.id) }}" style="display:inline;">

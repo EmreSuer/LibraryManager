@@ -45,10 +45,11 @@ class Book(db.Model):
     title = db.Column(db.String(150), nullable=False)
     author = db.Column(db.String(150), nullable=False)
     genre = db.Column(db.String(150), nullable=False)
-    notes = db.Column(db.Text, nullable=False)
-    date_book_finished = db.Column(db.DateTime, nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    date_book_finished = db.Column(db.DateTime, nullable=True)
     cover_image = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, nullable=True)
+    description = db.Column(db.Text, nullable=True)
 
     #Foreign key to the user table
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -165,9 +166,18 @@ def add_book():
     return render_template("add_book.html", genres=GENRES)  # Pass genres to the template
 
 
-@app.route("/search_books", methods=["GET"])
+@app.route("/search", methods=["GET", "POST"])
 @login_required
-def search_books():
+def search():
+    if request.method == "POST":
+        query = request.form.get("query")
+        return redirect(url_for("search_results", query=query))
+    return render_template("search.html")
+
+
+@app.route("/search_results")
+@login_required
+def search_results():
     query = request.args.get("query")
     if query:
         try:
@@ -177,8 +187,8 @@ def search_books():
             return render_template("search_results.html", books=data['docs'])
         except requests.exceptions.RequestException as e:
             flash(f"An error occurred while contacting the Open Library API: {e}")
-            return redirect(url_for("add_book"))
-    return redirect(url_for("add_book"))
+            return redirect(url_for("home"))
+    return redirect(url_for("home"))
 
 
 @app.route("/list_books")
@@ -208,9 +218,12 @@ def add_book_to_library():
         author=author,
         genre=genre,
         description=description,
-        due_date=datetime.now(timezone.utc),  # Set a default due date
         user_id=current_user.id  # Associate with the logged-in user
     )
+    print(new_book.description)
+    print(type(new_book.description))
+
+
     db.session.add(new_book)
     db.session.commit()
     flash("Book added to your library successfully!")
