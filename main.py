@@ -181,12 +181,12 @@ def search_results():
     query = request.args.get("query")
     if query:
         try:
-            response = requests.get(f"https://openlibrary.org/search.json?q={query}")
+            response = requests.get(f"https://www.googleapis.com/books/v1/volumes?q={query}")
             response.raise_for_status()
             data = response.json()
-            return render_template("search_results.html", books=data['docs'])
+            return render_template("search_results.html", books=data['items'])
         except requests.exceptions.RequestException as e:
-            flash(f"An error occurred while contacting the Open Library API: {e}")
+            flash(f"An error occurred while contacting the Google Books API: {e}")
             return redirect(url_for("home"))
     return redirect(url_for("home"))
 
