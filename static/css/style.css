@@ -1,0 +1,265 @@
+.book-item {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #6c757d; /* Vertical line between sections */
+    padding: 20px; /* Add padding for better spacing */
+}
+
+.book-item > div {
+    flex: 1; /* Allow each section to take equal space */
+    margin: 0 10px; /* Add margin between sections */
+}
+
+.book-item img {
+    max-width: 100%; /* Ensure images are responsive */
+    max-height: 300px; /* Set a max height for images */
+    object-fit: cover; /* Cover the area without distortion */
+    flex: 0 0 30%; /* Allow images to take up 30% of the width */
+}
+
+.book-item .description {
+    flex: 1; /* Allow description to take the remaining space */
+    overflow-y: auto; /* Enable scrolling if content overflows */
+    max-height: 300px; /* Set a max height for descriptions */
+    padding: 10px; /* Add padding for better readability */
+    background-color: #343a40; /* Match background color */
+    border: 1px solid #6c757d; /* Border for description area */
+    border-radius: 5px; /* Rounded corners */
+}
+
+/* Base styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #212529;
+    color: #e9ecef;
+    min-height: 100vh;
+}
+
+.navbar {
+    background-color: #343a40 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background-color: #343a40;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative; /* Required for absolute positioning of the overlay */
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.form-control {
+    border: 1px solid #495057;
+}
+
+.form-control:focus {
+    border-color: #6c757d;
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+}
+
+.btn {
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #343a40;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #495057;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}
+
+/* Navbar styles */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #e9ecef !important;
+}
+
+.nav-link {
+    color: #e9ecef !important;
+    margin: 0 10px;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    color: #adb5bd !important;
+    transform: translateY(-2px);
+}
+
+.navbar-toggler {
+    border-color: #e9ecef;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28233, 236, 239, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.card-img-top {
+    height: 250px;
+    object-fit: cover;
+    object-position: center;
+    background-color: #f8f9fa;
+}
+
+.card-img-top.default-img {
+    object-fit: contain;
+    padding: 1rem;
+}
+
+.card-body {
+    background-color: #343a40;
+    color: #e9ecef;
+}
+
+.card-title {
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Add this if you want to show a loading state */
+.card-img-top.loading {
+    position: relative;
+}
+
+.card-img-top.loading::after {
+    content: "Loading...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #6c757d;
+}
+
+/* Add these styles to your existing CSS */
+.collapse {
+    transition: all 0.3s ease;
+}
+
+.card-title {
+    color: #0d6efd; /* Bootstrap primary color */
+    cursor: pointer;
+}
+
+.card-title:hover {
+    color: #0a58ca; /* Darker shade for hover */
+}
+
+.notes-section textarea {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    resize: vertical;
+}
+
+.notes-section textarea:focus {
+    background-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Book ID overlay styles */
+.book-id-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.book-id-overlay span {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Image controls styling */
+.cover-image-container {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+}
+
+.image-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(52, 58, 64, 0.9);
+    padding: 10px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.cover-image-container:hover .image-controls,
+.card-img-top.text-center:hover .image-controls {
+    transform: translateY(0);
+}
+
+.image-controls .input-group {
+    margin-bottom: 0.5rem;
+}
+
+.image-controls .input-group:last-child {
+    margin-bottom: 0;
+}
+
+.image-controls .form-control {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.image-controls .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+/* Adjust the default icon container */
+.card-img-top.text-center {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.card-img-top .fa-book {
+    margin-bottom: 1rem;
+}
+
+/* Ensure images maintain aspect ratio */
+.card-img-top {
+    height: 250px;
+    object-fit: cover;
+    width: 100%;
+}

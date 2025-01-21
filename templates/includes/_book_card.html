@@ -1,0 +1,96 @@
+<div class="col-md-6 mb-4">
+    <div class="card h-100 bg-dark text-light border-secondary">
+        <div class="row g-0 h-100">
+            <!-- Book Cover Section -->
+            <div class="col-md-4 p-3">
+                {% if book.cover_image and book.cover_image.strip() %}
+                    <img src="{{ book.cover_image }}" alt="{{ book.title }}" 
+                         class="img-fluid rounded shadow" style="width: 100%; height: 350px; object-fit: cover;">
+                {% else %}
+                    <div class="text-center h-100">
+                        <img src="{{ url_for('static', filename='images/placeholder-book.png') }}" alt="No image available" 
+                             class="img-fluid rounded shadow" style="width: 100%; height: 350px; object-fit: cover; opacity: 0.5;">
+                        <div class="mt-2">
+                            <!-- URL Input Form -->
+                            <form method="POST" action="{{ url_for('update_cover_image', book_id=book.id) }}" class="mb-2">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control bg-dark text-light" 
+                                           name="cover_image_url" placeholder="Enter image URL">
+                                    <button type="submit" class="btn btn-outline-light">
+                                        <i class="fas fa-link"></i> Add URL
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- File Upload Form -->
+                            <form method="POST" action="{{ url_for('upload_cover_image', book_id=book.id) }}" 
+                                  enctype="multipart/form-data" class="mt-2">
+                                <div class="input-group input-group-sm">
+                                    <input type="file" class="form-control bg-dark text-light" 
+                                           name="cover_image_file" accept="image/*">
+                                    <button type="submit" class="btn btn-outline-light">
+                                        <i class="fas fa-upload"></i> Upload
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Book Details Section -->
+            <div class="col-md-8">
+                <div class="card-body d-flex flex-column h-100">
+                    <div class="mb-2">
+                        <h5 class="card-title text-light">{{ book.title }}</h5>
+                        <p class="card-text mb-1">
+                            <small class="text-muted">
+                                <i class="fas fa-user"></i> {{ book.author }}
+                            </small>
+                        </p>
+                        <p class="card-text mb-1">
+                            <span class="badge bg-secondary">{{ book.genre }}</span>
+                            {% if book.rating is not none %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-star"></i> {{ book.rating }}/10
+                                </span>
+                            {% endif %}
+                        </p>
+                        {% if book.date_book_finished %}
+                            <p class="card-text mb-2"><small class="text-muted">
+                                <i class="fas fa-calendar"></i> Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}
+                            </small></p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="flex-grow-1">
+                        <form method="POST" action="{{ url_for('save_notes', book_id=book.id) }}" class="mb-2">
+                            <div class="form-floating mb-2">
+                                <textarea class="form-control bg-dark text-light" name="notes" 
+                                          style="height: 180px" placeholder="Notes">{{ book.notes if book.notes else '' }}</textarea>
+                                <label class="text-muted">Notes</label>
+                            </div>
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-save"></i> Save Notes
+                            </button>
+                        </form>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Are you sure you want to delete this book?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

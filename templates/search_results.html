@@ -2,38 +2,47 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center mb-4">Search Results</h1>
-    <div class="text-center mb-3">
-        <a class="btn btn-secondary" href="{{ url_for('search') }}">Back to Search</a>
-    </div>
-    {% if books %}
-        <div class="row">
-            {% for book in books %}
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ book.volumeInfo.title }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">
-                                Author: {{ book.volumeInfo.authors | join(", ") if book.volumeInfo.authors else "Unknown" }}
-                            </h6>
-                            <p class="card-text">
-                                <strong>Genre:</strong> {{ book.volumeInfo.categories | join(", ") if book.volumeInfo.categories else "No genre available" }}<br>
-                                <strong>Description:</strong> {{ book.volumeInfo.description if book.volumeInfo.description else "No description available." }}
-                            </p>
-                            <form action="{{ url_for('add_book_to_library') }}" method="POST">
-                                <input type="hidden" name="title" value="{{ book.volumeInfo.title }}">
-                                <input type="hidden" name="author" value="{{ book.volumeInfo.authors | join(', ') }}">
-                                <input type="hidden" name="genre" value="{{ book.volumeInfo.categories | join(', ') }}">
-                                <input type="hidden" name="description" value="{{ book.volumeInfo.description }}">
-                                <button type="submit" class="btn btn-primary">Add to Library</button>
-                            </form>
+    <h1 class="text-center mb-4" style="color: #e9ecef; font-weight: 600;">Search Results</h1>
+    
+    <!-- Book List -->
+    <div class="row">
+        {% for book in books %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    {% if book.imageLinks and book.imageLinks.thumbnail %}
+                        <img src="{{ book.imageLinks.thumbnail }}" class="card-img-top" alt="{{ book.title }}">
+                    {% else %}
+                        <div class="card-img-top text-center py-5 bg-light">
+                            <i class="fas fa-book fa-4x text-muted"></i>
                         </div>
+                    {% endif %}
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ book.title }}</h5>
+                        <p class="card-text">
+                            <strong>Author(s):</strong> {{ book.authors|join(', ') }}<br>
+                            <strong>Genre:</strong> {{ book.categories[0] if book.categories else 'Uncategorized' }}
+                        </p>
+                        
+                        <form action="{{ url_for('add_book_to_library') }}" method="POST">
+                            <input type="hidden" name="title" value="{{ book.title }}">
+                            <input type="hidden" name="author" value="{{ book.authors[0] if book.authors else 'Unknown Author' }}">
+                            <input type="hidden" name="genre" value="{{ book.categories[0] if book.categories else 'Uncategorized' }}">
+                            <input type="hidden" name="description" value="{{ book.description }}">
+                            <input type="hidden" name="cover_image" value="{{ book.imageLinks.thumbnail if book.imageLinks and book.imageLinks.thumbnail else '' }}">
+                            <button type="submit" class="btn btn-primary">Add to Library</button>
+                        </form>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-danger text-center">No results found.</p>
-    {% endif %}
+            </div>
+        {% else %}
+            <div class="col-12 text-center">
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle"></i> No books found.
+                    <a href="{{ url_for('search') }}" class="alert-link">Try another search</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %} 

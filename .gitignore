@@ -16,3 +16,6 @@ __pycache__/
 # Ignore SQLite database files
 *.sqlite3
 instance/
+
+# Ignore uploaded files
+static/uploads/

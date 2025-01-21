@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash 
 import requests
+from werkzeug.utils import secure_filename
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +20,19 @@ app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY")
 # Database configuration
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Add these configurations after your existing app configurations
+UPLOAD_FOLDER = 'static/uploads/covers'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -59,7 +73,7 @@ class Book(db.Model):
 # Load user
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))  # Retrieve the user from the database
+    return User.query.get(int(user_id))  
 
 
 # Routes
@@ -184,7 +198,26 @@ def search_results():
             response = requests.get(f"https://www.googleapis.com/books/v1/volumes?q={query}")
             response.raise_for_status()
             data = response.json()
-            return render_template("search_results.html", books=data['items'])
+            
+            # Process the API response to extract only the needed information
+            processed_books = []
+            for item in data.get('items', []):
+                volume_info = item.get('volumeInfo', {})
+                # Get image URL and replace http with https if needed
+                image_url = volume_info.get('imageLinks', {}).get('thumbnail', '')
+                if image_url.startswith('http://'):
+                    image_url = 'https://' + image_url[7:]
+                
+                processed_books.append({
+                    'id': item.get('id', ''),
+                    'title': volume_info.get('title', 'Unknown Title'),
+                    'authors': volume_info.get('authors', ['Unknown Author']),
+                    'description': volume_info.get('description', 'No description available'),
+                    'imageLinks': {'thumbnail': image_url} if image_url else {},
+                    'categories': volume_info.get('categories', ['Uncategorized'])
+                })
+            
+            return render_template("search_results.html", books=processed_books)
         except requests.exceptions.RequestException as e:
             flash(f"An error occurred while contacting the Google Books API: {e}")
             return redirect(url_for("home"))
@@ -212,17 +245,16 @@ def add_book_to_library():
     author = request.form.get("author")
     genre = request.form.get("genre")
     description = request.form.get("description")
+    cover_image = request.form.get("cover_image")  
     
     new_book = Book(
         title=title,
         author=author,
         genre=genre,
         description=description,
-        user_id=current_user.id  # Associate with the logged-in user
+        cover_image=cover_image, 
+        user_id=current_user.id
     )
-    print(new_book.description)
-    print(type(new_book.description))
-
 
     db.session.add(new_book)
     db.session.commit()
@@ -287,11 +319,86 @@ def edit_book(book_id):
         db.session.commit()
         return redirect(url_for("list_books"))
     
-    return render_template("edit_book.html", book=book, genres=GENRES)  # Pass genres to the template
+    return render_template("edit_book.html", book=book, genres=GENRES) 
 
 
-
+@app.route("/update_cover_image/<int:book_id>", methods=["POST"])
+@login_required
+def update_cover_image(book_id):
+    book = Book.query.get_or_404(book_id)
     
+
+    if book.user_id != current_user.id:
+        flash("You don't have permission to modify this book.")
+        return redirect(url_for('list_books'))
+    
+    cover_image_url = request.form.get('cover_image_url')
+    if cover_image_url:
+        book.cover_image = cover_image_url
+        db.session.commit()
+        flash('Cover image updated successfully!')
+    else:
+        flash('Please provide an image URL')
+    
+    return redirect(url_for('list_books'))
+
+
+@app.route("/upload_cover_image/<int:book_id>", methods=["POST"])
+@login_required
+def upload_cover_image(book_id):
+    book = Book.query.get_or_404(book_id)
+    
+
+    if book.user_id != current_user.id:
+        flash("You don't have permission to modify this book.")
+        return redirect(url_for('list_books'))
+    
+    if 'cover_image_file' not in request.files:
+        flash('No file selected')
+        return redirect(url_for('list_books'))
+        
+    file = request.files['cover_image_file']
+    
+    if file.filename == '':
+        flash('No file selected')
+        return redirect(url_for('list_books'))
+        
+    if file and allowed_file(file.filename):
+        # Create a unique filename
+        filename = secure_filename(f"{book_id}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Delete old file if it exists
+        if book.cover_image and os.path.exists(book.cover_image.replace('/static/', '', 1)):
+            try:
+                os.remove(book.cover_image.replace('/static/', '', 1))
+            except:
+                pass
+        
+        # Save the new file
+        file.save(filepath)
+        
+        # Update database with new image path
+        book.cover_image = f"/static/uploads/covers/{filename}"
+        db.session.commit()
+        
+        flash('Cover image updated successfully!')
+    else:
+        flash('Invalid file type. Please use PNG, JPG, JPEG, or GIF files.')
+        
+    return redirect(url_for('list_books'))
+
+
+@app.route("/book/<int:book_id>")
+@login_required
+def book_details(book_id):
+    book = Book.query.get_or_404(book_id)
+    if book.user_id != current_user.id:
+        flash("You don't have permission to view this book.")
+        return redirect(url_for('list_books'))
+    return render_template("book_details.html", book=book)
+
+
 if __name__ == "__main__":
 
     with app.app_context():

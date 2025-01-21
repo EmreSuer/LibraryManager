@@ -2,51 +2,106 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center">My Library</h1>
-    <div class="text-center mb-3">
-        <a class="btn btn-primary" href="{{ url_for('home') }}">Home</a>
-        <a class="btn btn-success" href="{{ url_for('add_book') }}">Add Book</a>
-        <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a>
-    </div>
-    <!-- Book list will be displayed here -->
-    <ul class="list-group">
+    <h1 class="text-center mb-4" style="color: #e9ecef; font-weight: 600;">My Library</h1>
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-dark bg-dark rounded mb-4 p-3">
+        <div class="container-fluid justify-content-center">
+            <a class="btn btn-outline-light mx-2" href="{{ url_for('home') }}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a class="btn btn-outline-success mx-2" href="{{ url_for('add_book') }}">
+                <i class="fas fa-plus"></i> Add Book
+            </a>
+            <a class="btn btn-outline-danger mx-2" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- Book List -->
+    <div class="row">
         {% for book in books %}
-            <li class="list-group-item d-flex align-items-start" style="background-color: #495057; color: #ffffff; min-height: 300px;">
-                <div class="me-3" style="flex: 0 0 33.33%; min-height: 250px;">
-                    {% if book.cover_image %}
-                        <img src="{{ book.cover_image }}" alt="{{ book.title }}" style="max-width: 100%; max-height: 250px;">
-                    {% else %}
-                        <img src="path/to/placeholder-icon.png" alt="No image available" style="max-width: 100%; max-height: 250px;">
-                    {% endif %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <!-- Add the book ID overlay -->
+                <div class="book-id-overlay">
+                    <span>#{{ book.id }}</span>
                 </div>
-                <div class="me-3" style="flex: 0 0 33.33%; min-height: 250px;">
-                    <strong>{{ book.title }}</strong><br>
-                    Author: {{ book.author }}<br>
-                    {% if book.date_book_finished %}
-                        <p>Date Finished: {{ book.date_book_finished.strftime('%Y-%m-%d') }}</p>
-                    {% else %}
-                        <p>Date Finished: Not available</p>
-                    {% endif %}
-                    Genre: {{ book.genre }}<br>
-                    Rating: {{ book.rating if book.rating is not none else 'Not rated' }}<br>
-                    <form method="POST" action="{{ url_for('edit_book', book_id=book.id) }}" style="display:inline;">
-                        <button type="submit" class="btn btn-primary btn-sm">Edit</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" style="display:inline;">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </div>
-                <div style="flex: 0 0 33.33%; min-height: 250px;">
-                    <strong>Notes:</strong><br>
-                    <form method="POST" action="{{ url_for('save_notes', book_id=book.id) }}">
-                        <textarea class="form-control" name="notes" rows="5" placeholder="Write your notes here..." style="background-color: #495057; color: #ffffff; border: 1px solid #6c757d; max-height: 150px; overflow-y: auto;">{{ book.notes }}</textarea>
-                        <button type="submit" class="btn btn-primary btn-sm mt-2">Save Notes</button>
-                    </form>
-                </div>
-            </li>
+                
+                {% if book.cover_image %}
+                    <div class="cover-image-container position-relative">
+                        <img src="{{ book.cover_image }}" 
+                             class="card-img-top" 
+                             alt="{{ book.title }}"
+                             onerror="this.onerror=null; this.src='/static/images/default-book.png'; this.classList.add('default-img');">
+                        
+                        <!-- Image Controls for existing image -->
+                        <div class="image-controls mt-3">
+                            <!-- URL Input Form -->
+                            <form action="{{ url_for('update_cover_image', book_id=book.id) }}" method="POST" class="mb-2">
+                                <div class="input-group input-group-sm">
+                                    <input type="url" name="cover_image_url" class="form-control" placeholder="Change image URL">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-link"></i> Update
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- File Upload Form -->
+                            <form action="{{ url_for('upload_cover_image', book_id=book.id) }}" method="POST" enctype="multipart/form-data">
+                                <div class="input-group input-group-sm">
+                                    <input type="file" name="cover_image_file" class="form-control" accept="image/*">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-upload"></i> Upload New
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card-img-top text-center py-5 bg-light position-relative">
+                        <i class="fas fa-book fa-4x text-muted"></i>
+                        
+                        <!-- Add Image Controls -->
+                        <div class="image-controls mt-3">
+                            <!-- URL Input Form -->
+                            <form action="{{ url_for('update_cover_image', book_id=book.id) }}" method="POST" class="mb-2">
+                                <div class="input-group input-group-sm">
+                                    <input type="url" name="cover_image_url" class="form-control" placeholder="Enter image URL">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-link"></i> Add URL
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- File Upload Form -->
+                            <form action="{{ url_for('upload_cover_image', book_id=book.id) }}" method="POST" enctype="multipart/form-data">
+                                <div class="input-group input-group-sm">
+                                    <input type="file" name="cover_image_file" class="form-control" accept="image/*">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-upload"></i> Upload
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Toggle Button -->
+                <a href="{{ url_for('book_details', book_id=book.id) }}" class="text-decoration-none">
+                    <h5 class="card-title mb-0 text-center p-2">{{ book.title }}</h5>
+                </a>
+            </div>
+        </div>
         {% else %}
-            <li class="list-group-item text-danger">No books found in your library.</li>
+        <div class="col-12 text-center">
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle"></i> Your library is empty.
+                <a href="{{ url_for('search') }}" class="alert-link">Search for books to add</a>
+            </div>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {% endblock %} 
