@@ -51,6 +51,7 @@ class User(UserMixin, db.Model):
 
     #Relationship to the Book table
     books = db.relationship('Book', backref='user', lazy=True)
+    shelves = db.relationship('Shelf', backref='user', lazy=True)
 
 
 
@@ -64,10 +65,23 @@ class Book(db.Model):
     cover_image = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, nullable=True)
     description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50), default='mylibrary')  
+    hidden = db.Column(db.Boolean, default=False)
 
     #Foreign key to the user table
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    shelf_id = db.Column(db.Integer, db.ForeignKey('shelf.id'), nullable=True)
 
+
+
+class Shelf(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    
+    # Relationship to the Book table
+    books = db.relationship('Book', backref='shelf', lazy=True)
 
 
 # Load user
@@ -80,7 +94,25 @@ def load_user(user_id):
 @app.route("/")
 @login_required
 def home():
-    return render_template("index.html")
+    shelves = Shelf.query.filter_by(user_id=current_user.id).all()
+    wishlist_books = Book.query.filter_by(
+        user_id=current_user.id, 
+        category='wishlist',
+        hidden=False  # Add this condition
+    ).all()
+    
+    # Get books for each shelf
+    shelf_books = {}
+    for shelf in shelves:
+        shelf_books[shelf.id] = Book.query.filter_by(
+            shelf_id=shelf.id,
+            hidden=False  # Add this condition
+        ).all()
+    
+    return render_template("index.html", 
+                         shelves=shelves,
+                         shelf_books=shelf_books,
+                         wishlist_books=wishlist_books)
 
 
 
@@ -122,8 +154,6 @@ def register():
             flash('Email already exists')
             return redirect(url_for('register'))
 
-        
-            
         # Hash the password before storing it
         hashed_password = generate_password_hash(password)
 
@@ -131,8 +161,12 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        # Create default "MyLibrary"  shelf 
+        my_library = Shelf(name="MyLibrary", user_id=new_user.id)
+        db.session.add(my_library)
+        db.session.commit()
 
-        return redirect(url_for("home"))
+        return redirect(url_for("login"))
     return render_template("register.html")
 
 
@@ -146,9 +180,9 @@ def add_book():
     if request.method == "POST":
         title = request.form.get("title")
         author = request.form.get("author")
-        genre = request.form.get("genre")  # Get the selected genre
-        image_url = request.form.get("image_url")  # Get the image URL
-        rating = request.form.get("rating")  # Get the rating from the form
+        genre = request.form.get("genre")
+        image_url = request.form.get("image_url")
+        rating = request.form.get("rating")
 
         # Validate the rating
         if rating:
@@ -161,23 +195,30 @@ def add_book():
                 flash("Invalid rating. Please enter a number between 0 and 10.")
                 return redirect(url_for("add_book"))
         else:
-            rating = None  # Default to None if no rating is provided
+            rating = None
+
+        shelf_id = request.form.get("shelf_id")
+        category = 'wishlist' if not shelf_id else None
 
         new_book = Book(
             title=title,
             author=author,
-            genre=genre,  # Use the selected genre
-            notes="No notes available.",  # Default notes
-            date_book_finished=datetime.now(timezone.utc),  # Set the current date
-            user_id=current_user.id,  # Associate with the logged-in user
-            cover_image=image_url,  # Store the image URL
-            rating=rating  # Store the rating
+            genre=genre,
+            notes="No notes available.",
+            date_book_finished=datetime.now(timezone.utc),
+            user_id=current_user.id,
+            cover_image=image_url,
+            rating=rating,
+            shelf_id=shelf_id,
+            category=category
         )
         db.session.add(new_book)
         db.session.commit()
         flash("Book added successfully!")
-        return redirect(url_for("list_books"))
-    return render_template("add_book.html", genres=GENRES)  
+        return redirect(url_for("home"))
+    
+    shelves = Shelf.query.filter_by(user_id=current_user.id).all()
+    return render_template("add_book.html", genres=GENRES, shelves=shelves)
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -251,7 +292,10 @@ def search_results():
                     'categories': volume_info.get('categories', ['Uncategorized'])
                 })
             
-            return render_template("search_results.html", books=processed_books)
+            # Get user's shelves
+            shelves = Shelf.query.filter_by(user_id=current_user.id).all()
+            
+            return render_template("search_results.html", books=processed_books, shelves=shelves)
         except requests.exceptions.RequestException as e:
             flash(f"An error occurred while contacting the Google Books API: {e}")
             return redirect(url_for("home"))
@@ -279,21 +323,37 @@ def add_book_to_library():
     author = request.form.get("author")
     genre = request.form.get("genre")
     description = request.form.get("description")
-    cover_image = request.form.get("cover_image")  
+    cover_image = request.form.get("cover_image")
+    shelf_id = request.form.get("shelf_id")
     
+    # If no shelf_id provided, book goes to wishlist
+    if not shelf_id:
+        category = 'wishlist'
+        shelf_id = None
+    else:
+        category = 'mylibrary'
+        # Verify the shelf belongs to the user
+        shelf = Shelf.query.get(shelf_id)
+        if not shelf or shelf.user_id != current_user.id:
+            flash("Invalid shelf selected!")
+            return redirect(url_for("home"))
+
     new_book = Book(
         title=title,
         author=author,
         genre=genre,
         description=description,
-        cover_image=cover_image, 
-        user_id=current_user.id
+        cover_image=cover_image,
+        user_id=current_user.id,
+        shelf_id=shelf_id,
+        category=category,
+        hidden=False
     )
 
     db.session.add(new_book)
     db.session.commit()
     flash("Book added to your library successfully!")
-    return redirect(url_for("list_books"))
+    return redirect(url_for("home"))
 
 
 @app.route("/delete_book/<int:book_id>", methods=["POST"])
@@ -430,7 +490,90 @@ def book_details(book_id):
     if book.user_id != current_user.id:
         flash("You don't have permission to view this book.")
         return redirect(url_for('list_books'))
-    return render_template("book_details.html", book=book)
+    
+    # Get all shelves for the move functionality
+    shelves = Shelf.query.filter_by(user_id=current_user.id).all()
+    
+    return render_template("book_details.html", book=book, shelves=shelves)
+
+
+
+@app.route("/add_shelf", methods=["POST"])
+@login_required
+def add_shelf():
+    shelf_name = request.form.get("shelf_name")
+    if not shelf_name:
+        flash("Shelf name is required!")
+        return redirect(url_for("home"))
+        
+    # Check if shelf already exists for this user
+    existing_shelf = Shelf.query.filter_by(user_id=current_user.id, name=shelf_name).first()
+    if existing_shelf:
+        flash("A shelf with this name already exists!")
+        return redirect(url_for("home"))
+        
+    new_shelf = Shelf(name=shelf_name, user_id=current_user.id)
+    db.session.add(new_shelf)
+    db.session.commit()
+    flash(f"Shelf '{shelf_name}' created successfully!")
+    return redirect(url_for("home"))
+
+@app.route("/delete_shelf/<int:shelf_id>", methods=["POST"])
+@login_required
+def delete_shelf(shelf_id):
+    shelf = Shelf.query.get_or_404(shelf_id)
+    if shelf.user_id != current_user.id:
+        flash("You don't have permission to delete this shelf!")
+        return redirect(url_for("home"))
+    
+       
+    # Move all books from this shelf to MyLibrary
+    my_library = Shelf.query.filter_by(user_id=current_user.id, name="MyLibrary").first()
+    Book.query.filter_by(shelf_id=shelf_id).update({Book.shelf_id: my_library.id})
+    
+    db.session.delete(shelf)
+    db.session.commit()
+    flash("Shelf deleted successfully!")
+    return redirect(url_for("home"))
+
+@app.route("/move_book/<int:book_id>", methods=["POST"])
+@login_required
+def move_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    if book.user_id != current_user.id:
+        flash("You don't have permission to move this book!")
+        return redirect(url_for("home"))
+    
+    destination = request.form.get("destination")
+    if not destination:
+        flash("Invalid move request: No destination specified!")
+        return redirect(url_for("book_details", book_id=book.id))
+    
+    if destination == "wishlist":
+        # Move to wishlist
+        book.shelf_id = None
+        book.category = 'wishlist'
+    elif destination.startswith("shelf_"):
+        # Move to a shelf
+        try:
+            shelf_id = int(destination.split("_")[1])
+            shelf = Shelf.query.get(shelf_id)
+            if shelf and shelf.user_id == current_user.id:
+                book.shelf_id = shelf_id
+                book.category = 'mylibrary'  # Set category to mylibrary when moving to a shelf
+            else:
+                flash("Invalid shelf selected!")
+                return redirect(url_for("book_details", book_id=book.id))
+        except (IndexError, ValueError):
+            flash("Invalid destination format!")
+            return redirect(url_for("book_details", book_id=book.id))
+    else:
+        flash("Invalid destination selected!")
+        return redirect(url_for("book_details", book_id=book.id))
+    
+    db.session.commit()
+    flash("Book moved successfully!")
+    return redirect(url_for("home"))
 
 
 if __name__ == "__main__":

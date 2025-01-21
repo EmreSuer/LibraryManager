@@ -6,35 +6,58 @@
     
     <!-- Book List -->
     <div class="row">
-        {% for book in books %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100">
-                    {% if book.imageLinks and book.imageLinks.thumbnail %}
-                        <img src="{{ book.imageLinks.thumbnail }}" class="card-img-top" alt="{{ book.title }}">
-                    {% else %}
-                        <div class="card-img-top text-center py-5 bg-light">
-                            <i class="fas fa-book fa-4x text-muted"></i>
+        {% if books %}
+            {% for book in books %}
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                {% if book.imageLinks and book.imageLinks.thumbnail %}
+                                    <img src="{{ book.imageLinks.thumbnail }}" class="img-fluid rounded-start" alt="{{ book.title }}">
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-book fa-4x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ book.title }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            By {{ book.authors[0] if book.authors else 'Unknown Author' }}
+                                        </small>
+                                    </p>
+                                    <p class="card-text">{{ book.description[:200] + '...' if book.description else 'No description available' }}</p>
+                                    
+                                    <form action="{{ url_for('add_book_to_library') }}" method="POST">
+                                        <input type="hidden" name="title" value="{{ book.title }}">
+                                        <input type="hidden" name="author" value="{{ book.authors[0] if book.authors else 'Unknown Author' }}">
+                                        <input type="hidden" name="genre" value="{{ book.categories[0] if book.categories else 'Uncategorized' }}">
+                                        <input type="hidden" name="description" value="{{ book.description }}">
+                                        <input type="hidden" name="cover_image" value="{{ book.imageLinks.thumbnail if book.imageLinks and book.imageLinks.thumbnail else '' }}">
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="shelf_id">Add to Shelf:</label>
+                                            <select class="form-control" id="shelf_id" name="shelf_id">
+                                                <option value="">Wishlist</option>
+                                                {% for shelf in shelves %}
+                                                    <option value="{{ shelf.id }}" 
+                                                            {% if shelf.name == 'MyLibrary' %}selected{% endif %}>
+                                                        {{ shelf.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">Add to Library</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
-                    {% endif %}
-                    
-                    <div class="card-body">
-                        <h5 class="card-title">{{ book.title }}</h5>
-                        <p class="card-text">
-                            <strong>Author(s):</strong> {{ book.authors|join(', ') }}<br>
-                            <strong>Genre:</strong> {{ book.categories[0] if book.categories else 'Uncategorized' }}
-                        </p>
-                        
-                        <form action="{{ url_for('add_book_to_library') }}" method="POST">
-                            <input type="hidden" name="title" value="{{ book.title }}">
-                            <input type="hidden" name="author" value="{{ book.authors[0] if book.authors else 'Unknown Author' }}">
-                            <input type="hidden" name="genre" value="{{ book.categories[0] if book.categories else 'Uncategorized' }}">
-                            <input type="hidden" name="description" value="{{ book.description }}">
-                            <input type="hidden" name="cover_image" value="{{ book.imageLinks.thumbnail if book.imageLinks and book.imageLinks.thumbnail else '' }}">
-                            <button type="submit" class="btn btn-primary">Add to Library</button>
-                        </form>
                     </div>
                 </div>
-            </div>
+            {% endfor %}
         {% else %}
             <div class="col-12 text-center">
                 <div class="alert alert-info" role="alert">
@@ -42,7 +65,7 @@
                     <a href="{{ url_for('search') }}" class="alert-link">Try another search</a>
                 </div>
             </div>
-        {% endfor %}
+        {% endif %}
     </div>
 </div>
 {% endblock %} 

@@ -10,7 +10,7 @@
                     <img src="{{ book.cover_image }}" 
                          class="img-fluid rounded-start" 
                          alt="{{ book.title }}"
-                         onerror="this.onerror=null; this.src='/static/images/default-book.png'; this.classList.add('default-img');">
+                         onerror="this.onerror=null; this.src='/static/images/default-book.png';">
                 {% else %}
                     <div class="text-center py-5 bg-light">
                         <i class="fas fa-book fa-4x text-muted"></i>
@@ -24,11 +24,53 @@
                     <h2 class="card-title">{{ book.title }}</h2>
                     <p class="card-text">
                         <strong>Author:</strong> {{ book.author }}<br>
-                        <strong>Genre:</strong> {{ book.genre }}
-                        {% if book.rating %}
-                        <br><strong>Rating:</strong> {{ book.rating }}/10
+                        <strong>Genre:</strong> {{ book.genre }}<br>
+                        <strong>Location:</strong> 
+                        {% if book.category == 'wishlist' %}
+                            <span class="badge bg-warning">Wishlist</span>
+                        {% else %}
+                            <span class="badge bg-primary">{{ book.shelf.name if book.shelf else 'Unassigned' }}</span>
                         {% endif %}
                     </p>
+
+                    <!-- Move Book Form -->
+                    <div class="mb-3">
+                        <form method="POST" action="{{ url_for('move_book', book_id=book.id) }}" class="d-inline">
+                            <div class="input-group">
+                                <select class="form-select" name="destination" required>
+                                    <option value="">Move to...</option>
+                                    {% if book.category != 'wishlist' %}
+                                        <option value="wishlist">Wishlist</option>
+                                    {% endif %}
+                                    {% for shelf in shelves %}
+                                        {% if book.shelf_id != shelf.id %}
+                                            <option value="shelf_{{ shelf.id }}">{{ shelf.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-outline-secondary">Move</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {% if book.description %}
+                        <h5>Description</h5>
+                        <p class="card-text">{{ book.description }}</p>
+                    {% endif %}
+
+                    {% if book.notes %}
+                        <h5>Notes</h5>
+                        <p class="card-text">{{ book.notes }}</p>
+                    {% endif %}
+
+                    {% if book.rating is not none %}
+                        <p class="card-text">
+                            <strong>Rating:</strong> 
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-star"></i> {{ book.rating }}/10
+                            </span>
+                        </p>
+                    {% endif %}
 
                     <!-- Notes Section -->
                     <div class="notes-section mt-4">

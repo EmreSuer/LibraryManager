@@ -1,11 +1,156 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Hello, {{ current_user.username }}</h1>
-<p>Welcome to the home page.</p>
-<a href="{{ url_for('add_book') }}">Add Book</a>
-<a href="{{ url_for('logout') }}">Logout</a>    
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Welcome, {{ current_user.username }}</h1>
 
+    <!-- Add New Shelf Form -->
+    <div class="mb-4">
+        <form method="POST" action="{{ url_for('add_shelf') }}" class="d-flex justify-content-center gap-2">
+            <input type="text" name="shelf_name" class="form-control" style="max-width: 300px;" 
+                   placeholder="New Shelf Name" required>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add Shelf
+            </button>
+        </form>
+    </div>
 
+    <!-- Shelves Section -->
+    {% for shelf in shelves %}
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-bookmark"></i> {{ shelf.name }}
+                <span class="badge bg-secondary">{{ shelf_books[shelf.id]|length }}</span>
+            </h2>
+            {% if shelf.name != "MyLibrary" %}
+            <form method="POST" action="{{ url_for('delete_shelf', shelf_id=shelf.id) }}" 
+                  class="d-inline" onsubmit="return confirm('Are you sure you want to delete this shelf?');">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i> Delete Shelf
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        <div class="row">
+            {% for book in shelf_books[shelf.id] %}
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        {% if book.cover_image %}
+                            <img src="{{ book.cover_image }}" class="card-img-top" alt="{{ book.title }}">
+                        {% else %}
+                            <div class="card-img-top text-center py-5 bg-light">
+                                <i class="fas fa-book fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">{{ book.author }}</small>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('book_details', book_id=book.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    View Details
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary btn-sm dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        Move
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form method="POST" action="{{ url_for('move_book', book_id=book.id) }}">
+                                                <input type="hidden" name="destination" value="wishlist">
+                                                <button type="submit" class="dropdown-item">
+                                                    Wishlist
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% for other_shelf in shelves %}
+                                            {% if other_shelf.id != shelf.id %}
+                                            <li>
+                                                <form method="POST" action="{{ url_for('move_book', book_id=book.id) }}">
+                                                    <input type="hidden" name="destination" value="shelf_{{ other_shelf.id }}">
+                                                    <button type="submit" class="dropdown-item">
+                                                        {{ other_shelf.name }}
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Wishlist Section -->
+    <div class="mb-5">
+        <h2 class="mb-4">
+            <i class="fas fa-heart"></i> Wish List 
+            <span class="badge bg-secondary">{{ wishlist_books|length }}</span>
+        </h2>
+        <div class="row">
+            {% for book in wishlist_books %}
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        {% if book.cover_image %}
+                            <img src="{{ book.cover_image }}" class="card-img-top" alt="{{ book.title }}">
+                        {% else %}
+                            <div class="card-img-top text-center py-5 bg-light">
+                                <i class="fas fa-book fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">{{ book.author }}</small>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('book_details', book_id=book.id) }}" class="btn btn-primary btn-sm">
+                                    View Details
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary btn-sm dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        Move
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% for shelf in shelves %}
+                                        <li>
+                                            <form method="POST" action="{{ url_for('move_book', book_id=book.id) }}">
+                                                <input type="hidden" name="destination" value="shelf_{{ shelf.id }}">
+                                                <button type="submit" class="dropdown-item">
+                                                    {{ shelf.name }}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('add_book') }}" class="btn btn-success me-2">
+            <i class="fas fa-plus"></i> Add New Book
+        </a>
+        <a href="{{ url_for('search') }}" class="btn btn-primary">
+            <i class="fas fa-search"></i> Search Books
+        </a>
+    </div>
+</div>
 {% endblock %}
 
