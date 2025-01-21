@@ -177,16 +177,50 @@ def add_book():
         db.session.commit()
         flash("Book added successfully!")
         return redirect(url_for("list_books"))
-    return render_template("add_book.html", genres=GENRES)  # Pass genres to the template
+    return render_template("add_book.html", genres=GENRES)  
 
 
 @app.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
+    """Handle Google Books search"""
     if request.method == "POST":
         query = request.form.get("query")
         return redirect(url_for("search_results", query=query))
     return render_template("search.html")
+
+
+@app.route("/search_in_library", methods=["GET", "POST"])
+@login_required
+def search_in_library():
+    """Handle library search"""
+    if request.method == "POST":
+        search_query = request.form.get("query", "").strip().lower()
+        
+        # If no search query provided, return all books
+        if not search_query:
+            return redirect(url_for("list_books"))
+        
+        # SQL Query by using SQLAlchemy
+        search_results = Book.query.filter(
+            db.and_(
+                Book.user_id == current_user.id, # Filter by the current user's books
+                db.or_(
+                    db.func.lower(Book.title).contains(search_query),
+                    db.func.lower(Book.author).contains(search_query),
+                    db.func.lower(Book.genre).contains(search_query),
+                    db.func.lower(Book.notes).contains(search_query),
+                    db.func.lower(Book.description).contains(search_query)
+                )  # OR conditions for multiple fields to search across
+            )
+        ).all() # execute the query and return all results
+        
+        return render_template("list_books.html", 
+                             books=search_results, 
+                             search_query=search_query)
+    
+    # If GET request, show the search form
+    return render_template("library_search.html")
 
 
 @app.route("/search_results")

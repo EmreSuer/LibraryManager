@@ -32,15 +32,18 @@
 
                     <!-- Notes Section -->
                     <div class="notes-section mt-4">
-                        <h4>Notes:</h4>
+                        <h4 class="mb-3">Notes:</h4>
                         <form action="{{ url_for('save_notes', book_id=book.id) }}" method="POST">
                             <div class="form-group">
-                                <textarea class="form-control mb-2" 
+                                <textarea class="form-control mb-3" 
                                           name="notes" 
-                                          rows="5" 
+                                          rows="12" 
+                                          style="min-height: 200px; font-size: 1.1rem;"
                                           placeholder="Add your notes here...">{{ book.notes }}</textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">Save Notes</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Notes
+                            </button>
                         </form>
                     </div>
 

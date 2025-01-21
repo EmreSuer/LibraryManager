@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center mb-4" style="color: #e9ecef; font-weight: 600;">My Library</h1>
+    <h1 class="text-center mb-4" style="color: #e9ecef; font-weight: 600;">My Library ( {{ books|length }} books )</h1>
     
     <!-- Navigation Bar -->
     <nav class="navbar navbar-dark bg-dark rounded mb-4 p-3">
@@ -12,6 +12,9 @@
             </a>
             <a class="btn btn-outline-success mx-2" href="{{ url_for('add_book') }}">
                 <i class="fas fa-plus"></i> Add Book
+            </a>
+            <a class="btn btn-outline-info mx-2" href="{{ url_for('search_in_library') }}">
+                <i class="fas fa-search"></i> Search
             </a>
             <a class="btn btn-outline-danger mx-2" href="{{ url_for('logout') }}">
                 <i class="fas fa-sign-out-alt"></i> Logout
