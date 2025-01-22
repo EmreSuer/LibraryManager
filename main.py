@@ -169,8 +169,49 @@ def register():
 
 
 
-# Add a list of predefined genres
-GENRES = ["Romance", "Action", "Adventure", "Science Fiction", "Fantasy", "Mystery", "Non-Fiction"]
+GENRES = [
+    # Most Common Genres
+    "Fiction",
+    "Non-Fiction", 
+    "Mystery/Thriller",
+    "Romance",
+    "Science Fiction",
+    "Fantasy",
+    "Literary Fiction",
+    "Historical Fiction",
+    "Biography/Memoir",
+    "Self-Help",
+    
+    # Additional Fiction Genres
+    "Action/Adventure",
+    "Contemporary Fiction",
+    "Crime Fiction",
+    "Horror",
+    "Young Adult",
+    "Children's",
+    "Graphic Novel",
+    "Short Stories",
+    "Poetry",
+    "Drama",
+    
+    # Additional Non-Fiction Categories
+    "History",
+    "Science",
+    "Philosophy",
+    "Psychology",
+    "Business",
+    "Politics",
+    "Travel",
+    "Art/Photography",
+    "Cooking/Food",
+    "Health/Wellness",
+    "Religion/Spirituality",
+    "Education",
+    "Technology",
+    "True Crime",
+    "Essays",
+    "Reference"
+]
 
 @app.route("/add_book", methods=["GET", "POST"])
 @login_required

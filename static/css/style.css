@@ -263,3 +263,32 @@ body {
     object-fit: cover;
     width: 100%;
 }
+
+/* Dropdown menu styles */
+select.form-control {
+    position: relative;
+    z-index: 1000;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+/* Ensure dropdowns have enough space */
+select[size] {
+    height: auto;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Style optgroups for better visibility */
+optgroup {
+    font-weight: bold;
+    color: #6c757d;
+}
+
+optgroup option {
+    font-weight: normal;
+    padding-left: 15px;
+}
