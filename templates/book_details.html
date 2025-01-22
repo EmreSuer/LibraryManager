@@ -58,6 +58,16 @@
                         <p class="card-text">{{ book.description }}</p>
                     {% endif %}
 
+                    {% if book.date_book_finished %}
+                        <p class="card-text">
+                            <strong>Date Finished:</strong> 
+                            <span class="text-light">
+                                <i class="fas fa-calendar"></i> 
+                                {{ book.date_book_finished }}
+                            </span>
+                        </p>
+                    {% endif %}
+
                     {% if book.notes %}
                         <h5>Notes</h5>
                         <p class="card-text">{{ book.notes }}</p>
@@ -106,8 +116,8 @@
         </div>
     </div>
 
-    <div class="text-center mt-4">
-        <a href="{{ url_for('list_books') }}" class="btn btn-secondary">
+    <div class="text-center mt-4 mb-4">
+        <a href="{{ url_for('list_books') }}" class="btn btn-secondary text-light">
             <i class="fas fa-arrow-left"></i> Back to Library
         </a>
     </div>

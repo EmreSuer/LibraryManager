@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash 
 import requests
 from werkzeug.utils import secure_filename
+import re
 
 # Load environment variables
 load_dotenv()
@@ -61,12 +62,11 @@ class Book(db.Model):
     author = db.Column(db.String(150), nullable=False)
     genre = db.Column(db.String(150), nullable=False)
     notes = db.Column(db.Text, nullable=True)
-    date_book_finished = db.Column(db.DateTime, nullable=True)
+    date_book_finished = db.Column(db.String(150), nullable=True)
     cover_image = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Float, nullable=True)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50), default='mylibrary')  
-    hidden = db.Column(db.Boolean, default=False)
 
     #Foreign key to the user table
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -98,7 +98,6 @@ def home():
     wishlist_books = Book.query.filter_by(
         user_id=current_user.id, 
         category='wishlist',
-        hidden=False  # Add this condition
     ).all()
     
     # Get books for each shelf
@@ -106,7 +105,6 @@ def home():
     for shelf in shelves:
         shelf_books[shelf.id] = Book.query.filter_by(
             shelf_id=shelf.id,
-            hidden=False  # Add this condition
         ).all()
     
     return render_template("index.html", 
@@ -183,8 +181,23 @@ def add_book():
         genre = request.form.get("genre")
         image_url = request.form.get("image_url")
         rating = request.form.get("rating")
+        date_finished = request.form.get("date_book_finished")
 
-        # Validate the rating
+        # Validate date format if provided
+        if date_finished:
+            # Check if date matches MM/YYYY format
+            if not re.match(r'^(0[1-9]|1[0-2])\/[0-9]{4}$', date_finished):
+                flash("Date must be in MM/YYYY format (e.g., 03/2024)")
+                return redirect(url_for("add_book"))
+            
+            # Verify it's a valid date
+            try:
+                datetime.strptime(date_finished, '%m/%Y')
+            except ValueError:
+                flash("Invalid date")
+                return redirect(url_for("add_book"))
+
+        # Validate rating if provided
         if rating:
             try:
                 rating = float(rating)
@@ -205,7 +218,7 @@ def add_book():
             author=author,
             genre=genre,
             notes="No notes available.",
-            date_book_finished=datetime.now(timezone.utc),
+            date_book_finished=date_finished,
             user_id=current_user.id,
             cover_image=image_url,
             rating=rating,
@@ -347,7 +360,6 @@ def add_book_to_library():
         user_id=current_user.id,
         shelf_id=shelf_id,
         category=category,
-        hidden=False
     )
 
     db.session.add(new_book)
@@ -390,17 +402,30 @@ def edit_book(book_id):
         author = request.form.get("author")
         genre = request.form.get("genre")
         rating = request.form.get("rating")
-
-    
+        date_finished = request.form.get("date_book_finished")
 
         # Check if required fields are filled
         if not title or not author or not genre:
             flash("All fields are required.")
             return redirect(url_for("edit_book", book_id=book.id))
 
+        # Validate date format if provided
+        if date_finished:
+            # Check if date matches MM/YYYY format
+            if not re.match(r'^(0[1-9]|1[0-2])\/[0-9]{4}$', date_finished):
+                flash("Date must be in MM/YYYY format (e.g., 03/2024)")
+                return redirect(url_for("edit_book", book_id=book.id))
+            
+            # Verify it's a valid date
+            try:
+                datetime.strptime(date_finished, '%m/%Y')
+            except ValueError:
+                flash("Invalid date")
+                return redirect(url_for("edit_book", book_id=book.id))
+
         # Handle rating input
         try:
-            book.rating = float(rating) if rating else None  # Convert to float or set to None
+            book.rating = float(rating) if rating else None
         except ValueError:
             flash("Invalid rating. Please enter a number between 0 and 10.")
             return redirect(url_for("edit_book", book_id=book.id))
@@ -409,11 +434,13 @@ def edit_book(book_id):
         book.title = title
         book.author = author
         book.genre = genre
+        book.date_book_finished = date_finished
 
         db.session.commit()
-        return redirect(url_for("list_books"))
+        flash("Book updated successfully!")
+        return redirect(url_for("book_details", book_id=book.id))
     
-    return render_template("edit_book.html", book=book, genres=GENRES) 
+    return render_template("edit_book.html", book=book, genres=GENRES)
 
 
 @app.route("/update_cover_image/<int:book_id>", methods=["POST"])

@@ -24,6 +24,17 @@
             <label for="rating">Rating (0-10)</label>
             <input type="text" name="rating" class="form-control mb-2" id="rating" placeholder="Rating (0-10)" value="{{ book.rating if book.rating is not none else '' }}">
         </div>
+        <div class="form-group">
+            <label for="date_book_finished">Date Finished (MM/YYYY)</label>
+            <input type="text" 
+                   name="date_book_finished" 
+                   class="form-control mb-2" 
+                   id="date_book_finished" 
+                   placeholder="MM/YYYY"
+                   pattern="(0[1-9]|1[0-2])\/[0-9]{4}"
+                   title="Please enter date in MM/YYYY format (e.g., 03/2024)"
+                   value="{{ book.date_book_finished if book.date_book_finished }}">
+        </div>
         <button type="submit" class="btn btn-primary">Update Book</button>
     </form>
 </div>

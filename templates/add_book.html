@@ -7,7 +7,16 @@
         <input type="text" name="title" class="form-control mr-2" placeholder="Book Title" required>
         <input type="text" name="author" class="form-control mr-2" placeholder="Author" required>
         <input type="text" name="publisher" class="form-control mr-2" placeholder="Publisher" required>
-        <input type="text" name="year" class="form-control mr-2" placeholder="Year" required>
+        <div class="form-group">
+            <label for="date_book_finished">Date Finished (MM/YYYY)</label>
+            <input type="text" 
+                   name="date_book_finished" 
+                   class="form-control mb-2" 
+                   id="date_book_finished" 
+                   placeholder="MM/YYYY"
+                   pattern="(0[1-9]|1[0-2])\/[0-9]{4}"
+                   title="Please enter date in MM/YYYY format (e.g., 03/2024)">
+        </div>
         <input type="text" name="image_url" class="form-control mr-2" placeholder="Image URL (optional)">
         
         <input type="float" name="rating" class="form-control mr-2" placeholder="Rating (0-10)" required>
