@@ -8,6 +8,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from werkzeug.utils import secure_filename
 import re
+# Exporting and importing modules
+import csv
+from io import StringIO
+import json
+from werkzeug.wrappers import Response
 
 # Load environment variables
 load_dotenv()
@@ -707,6 +712,143 @@ def move_book(book_id):
     db.session.commit()
     flash("Book moved successfully!")
     return redirect(url_for("home"))
+
+
+@app.route("/export_books/<format>")
+@login_required
+def export_books(format):
+    """Export books in CSV or JSON format"""
+    books = Book.query.filter_by(user_id=current_user.id).all()
+    
+    # Prepare the data
+    book_data = []
+    for book in books:
+        book_data.append({
+            'title': book.title,
+            'author': book.author,
+            'genre': book.genre,
+            'date_finished': book.date_book_finished,
+            'rating': book.rating
+        })
+
+    if format == "csv":
+        # Create a string buffer to write CSV data
+        si = StringIO()
+        writer = csv.DictWriter(si, fieldnames=book_data[0].keys() if book_data else [])
+        
+        # Write headers and data
+        writer.writeheader()
+        writer.writerows(book_data)
+        
+        # Prepare the response
+        output = si.getvalue()
+        si.close()
+        
+        # Generate filename with timestamp
+        filename = f"books_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        return Response(
+            output,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+        
+    elif format == "json":
+        # Generate filename with timestamp
+        filename = f"books_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        return Response(
+            json.dumps(book_data, indent=2),
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    
+    flash("Invalid export format specified")
+    return redirect(url_for("home"))
+
+
+def validate_book_data(data):
+    """Validate the required fields in book data"""
+    required_fields = ['title', 'author', 'genre']
+    return all(field in data and data[field] for field in required_fields)
+
+@app.route("/import_books", methods=["GET", "POST"])
+@login_required
+def import_books():
+    if request.method == "POST":
+        if 'file' not in request.files:
+            flash('No file selected')
+            return redirect(request.url)
+            
+        file = request.files['file']
+        if file.filename == '':
+            flash('No file selected')
+            return redirect(request.url)
+            
+        if not file.filename.endswith(('.csv', '.json')):
+            flash('Invalid file type. Please upload a CSV or JSON file.')
+            return redirect(request.url)
+            
+        try:
+            # Process CSV file
+            if file.filename.endswith('.csv'):
+                stream = StringIO(file.stream.read().decode("UTF8"), newline=None)
+                csv_data = csv.DictReader(stream)
+                books_data = list(csv_data)
+                
+            # Process JSON file
+            else:
+                books_data = json.load(file)
+                if not isinstance(books_data, list):
+                    books_data = [books_data]
+            
+            # Import the books
+            success_count = 0
+            error_count = 0
+            
+            # Get user's MyLibrary shelf
+            my_library = Shelf.query.filter_by(user_id=current_user.id, name="MyLibrary").first()
+            if not my_library:
+                # Create MyLibrary shelf if it doesn't exist
+                my_library = Shelf(name="MyLibrary", user_id=current_user.id)
+                db.session.add(my_library)
+                db.session.commit()
+            
+            for book_data in books_data:
+                if not validate_book_data(book_data):
+                    error_count += 1
+                    continue
+                
+                # Create new book with default values
+                new_book = Book(
+                    title=book_data['title'],
+                    author=book_data['author'],
+                    genre=book_data['genre'],
+                    notes=book_data.get('notes', 'No notes available.'),
+                    date_book_finished=book_data.get('date_finished'),
+                    rating=book_data.get('rating'),
+                    user_id=current_user.id,
+                    shelf_id=my_library.id,  # Default to MyLibrary shelf
+                    category='mylibrary'  # Default category
+                )
+                
+                db.session.add(new_book)
+                success_count += 1
+            
+            db.session.commit()
+            
+            if error_count:
+                flash(f'Imported {success_count} books successfully. {error_count} books were skipped due to invalid data.')
+            else:
+                flash(f'Successfully imported {success_count} books!')
+                
+        except Exception as e:
+            flash(f'Error importing books: {str(e)}')
+            return redirect(request.url)
+            
+        return redirect(url_for('home'))
+        
+    return render_template('import_books.html')
 
 
 if __name__ == "__main__":
