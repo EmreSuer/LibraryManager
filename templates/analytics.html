@@ -81,99 +81,102 @@
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Initialize charts with data from Flask -->
 <script>
-// Books per Year Chart
-const booksPerYearCtx = document.getElementById('booksPerYearChart').getContext('2d');
-new Chart(booksPerYearCtx, {
-    type: 'bar',
-    data: {
-        labels: {{ years|tojson }},
-        datasets: [{
-            label: 'Books Read',
-            data: {{ books_per_year|tojson }},
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1,
-                    color: '#e9ecef'
+document.addEventListener('DOMContentLoaded', function() {
+    // Books per Year Chart
+    const booksPerYearCtx = document.getElementById('booksPerYearChart').getContext('2d');
+    const booksPerYearChart = new Chart(booksPerYearCtx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ years|tojson|safe }}'),
+            datasets: [{
+                label: 'Books Read',
+                data: JSON.parse('{{ books_per_year|tojson|safe }}'),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#e9ecef'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
                 },
-                grid: {
-                    color: 'rgba(255, 255, 255, 0.1)'
+                x: {
+                    ticks: {
+                        color: '#e9ecef'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
                 }
             },
-            x: {
-                ticks: {
-                    color: '#e9ecef'
-                },
-                grid: {
-                    color: 'rgba(255, 255, 255, 0.1)'
-                }
-            }
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#e9ecef'
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e9ecef'
+                    }
                 }
             }
         }
-    }
-});
+    });
 
-// Genre Distribution Chart
-const genreCtx = document.getElementById('genreDistributionChart').getContext('2d');
-new Chart(genreCtx, {
-    type: 'pie',
-    data: {
-        labels: {{ genre_labels|tojson }},
-        datasets: [{
-            data: {{ genre_data|tojson }},
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.5)',
-                'rgba(54, 162, 235, 0.5)',
-                'rgba(255, 206, 86, 0.5)',
-                'rgba(75, 192, 192, 0.5)',
-                'rgba(153, 102, 255, 0.5)',
-                'rgba(255, 159, 64, 0.5)',
-                'rgba(199, 199, 199, 0.5)',
-                'rgba(83, 102, 255, 0.5)',
-                'rgba(40, 159, 64, 0.5)',
-                'rgba(210, 199, 199, 0.5)',
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)',
-                'rgba(199, 199, 199, 1)',
-                'rgba(83, 102, 255, 1)',
-                'rgba(40, 159, 64, 1)',
-                'rgba(210, 199, 199, 1)',
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'right',
-                labels: {
-                    color: '#e9ecef'
+    // Genre Distribution Chart
+    const genreCtx = document.getElementById('genreDistributionChart').getContext('2d');
+    const genreChart = new Chart(genreCtx, {
+        type: 'pie',
+        data: {
+            labels: JSON.parse('{{ genre_labels|tojson|safe }}'),
+            datasets: [{
+                data: JSON.parse('{{ genre_data|tojson|safe }}'),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                    'rgba(255, 159, 64, 0.5)',
+                    'rgba(199, 199, 199, 0.5)',
+                    'rgba(83, 102, 255, 0.5)',
+                    'rgba(40, 159, 64, 0.5)',
+                    'rgba(210, 199, 199, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)',
+                    'rgba(83, 102, 255, 1)',
+                    'rgba(40, 159, 64, 1)',
+                    'rgba(210, 199, 199, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#e9ecef'
+                    }
                 }
             }
         }
-    }
+    });
 });
 </script>
 {% endblock %} 
