@@ -292,3 +292,25 @@ optgroup option {
     font-weight: normal;
     padding-left: 15px;
 }
+
+/* Add these styles for the sorting controls */
+.btn-group {
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.btn-group .btn {
+    border-radius: 20px;
+    margin: 2px;
+    font-size: 0.9rem;
+}
+
+.btn-group .btn.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}

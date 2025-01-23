@@ -22,6 +22,94 @@
         </div>
     </nav>
 
+    <!-- Add this after the navigation bar and before the book list -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-dark">
+                <div class="card-body">
+                    <h5 class="card-title text-light mb-3">Sort Books</h5>
+                    <div class="btn-group">
+                        <a href="{{ url_for('list_books', sort_by='title', order='asc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'title' and current_order == 'asc' }}">
+                            Title (A-Z)
+                        </a>
+                        <a href="{{ url_for('list_books', sort_by='title', order='desc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'title' and current_order == 'desc' }}">
+                            Title (Z-A)
+                        </a>
+                        <a href="{{ url_for('list_books', sort_by='rating', order='desc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'rating' and current_order == 'desc' }}">
+                            Rating (High to Low)
+                        </a>
+                        <a href="{{ url_for('list_books', sort_by='rating', order='asc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'rating' and current_order == 'asc' }}">
+                            Rating (Low to High)
+                        </a>
+                        <a href="{{ url_for('list_books', sort_by='date', order='desc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'date' and current_order == 'desc' }}">
+                            Date Finished (Newest)
+                        </a>
+                        <a href="{{ url_for('list_books', sort_by='date', order='asc') }}" 
+                           class="btn btn-outline-light {{ 'active' if current_sort == 'date' and current_order == 'asc' }}">
+                            Date Finished (Oldest)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this inside the sort buttons card, after the existing btn-group -->
+    <div class="card bg-dark">
+        <div class="card-body">
+            <h5 class="card-title text-light mb-3">Sort & Filter Books</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="btn-group mb-3">
+                        <!-- Existing sort buttons... -->
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <form action="{{ url_for('list_books') }}" method="GET" class="mb-3">
+                        <!-- Preserve existing sort parameters -->
+                        <input type="hidden" name="sort_by" value="{{ current_sort }}">
+                        <input type="hidden" name="order" value="{{ current_order }}">
+                        
+                        <div class="input-group">
+                            <select name="year" class="form-select bg-dark text-light border-secondary" onchange="this.form.submit()">
+                                <option value="">All Years</option>
+                                {% for year in available_years %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                        {{ year }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update the book count to show filtered results -->
+    <h1 class="text-center mb-4" style="color: #e9ecef; font-weight: 600;">
+        My Library ({{ books|length }} books)
+        {% if current_sort != 'title' or current_order != 'asc' or current_year %}
+            <small class="d-block text-muted" style="font-size: 1rem;">
+                {% if current_sort == 'rating' %}
+                    Sorted by Rating ({{ 'High to Low' if current_order == 'desc' else 'Low to High' }})
+                {% elif current_sort == 'date' %}
+                    Sorted by Date Finished ({{ 'Newest First' if current_order == 'desc' else 'Oldest First' }})
+                {% else %}
+                    Sorted by Title ({{ 'Z-A' if current_order == 'desc' else 'A-Z' }})
+                {% endif %}
+                {% if current_year %}
+                    | Showing books from {{ current_year }}
+                {% endif %}
+            </small>
+        {% endif %}
+    </h1>
+
     <!-- Book List -->
     <div class="row">
         {% for book in books %}

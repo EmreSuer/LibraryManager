@@ -359,8 +359,73 @@ def search_results():
 @app.route("/list_books")
 @login_required
 def list_books():
-    user_books = Book.query.filter_by(user_id=current_user.id).all()  
-    return render_template("list_books.html", books=user_books)  
+    # Get all user's books
+    user_books = Book.query.filter_by(user_id=current_user.id)
+    
+    # Get filter parameters
+    sort_by = request.args.get('sort_by', 'title')  # Default sort by title
+    order = request.args.get('order', 'asc')  # Default ascending order
+    year_filter = request.args.get('year')
+    
+    # Get unique years from date_book_finished for the dropdown
+    years_query = db.session.query(
+        db.func.distinct(db.func.substr(Book.date_book_finished, -4))
+    ).filter(
+        Book.user_id == current_user.id,
+        Book.date_book_finished.isnot(None)
+    ).order_by(
+        db.func.substr(Book.date_book_finished, -4).desc()
+    )
+    available_years = [year[0] for year in years_query.all() if year[0]]
+    
+    # Apply year filter if specified
+    if year_filter:
+        user_books = user_books.filter(db.func.substr(Book.date_book_finished, -4) == year_filter)
+    
+    # Apply sorting based on parameters
+    if sort_by == 'rating':
+        # Sort by rating, putting None values at the end
+        if order == 'desc':
+            user_books = user_books.order_by(
+                Book.rating.is_(None),
+                Book.rating.desc()
+            )
+        else:
+            user_books = user_books.order_by(
+                Book.rating.is_(None),
+                Book.rating.asc()
+            )
+    elif sort_by == 'date':
+        # Extract first year and then month for sorting
+        if order == 'desc':
+            user_books = user_books.order_by(
+                Book.date_book_finished.is_(None), 
+                db.func.substr(Book.date_book_finished, -4).desc(), # Substring SQL function, -4 means last 4 characters
+                db.func.substr(Book.date_book_finished, 1, 2).desc() # 1, 2 means first 2 characters
+            )
+        else:
+            user_books = user_books.order_by(
+                db.func.substr(Book.date_book_finished, -4).asc(),  
+                db.func.substr(Book.date_book_finished, 1, 2).asc(),  
+                Book.date_book_finished.is_(None)
+            )
+    else:  # Default sort by title
+        if order == 'desc':
+            user_books = user_books.order_by(Book.title.desc())
+        else:
+            user_books = user_books.order_by(Book.title.asc())
+    
+    # Execute query
+    books = user_books.all()
+    
+    return render_template(
+        "list_books.html", 
+        books=books,
+        current_sort=sort_by,
+        current_order=order,
+        available_years=available_years,
+        current_year=year_filter
+    )
 
 
 @app.route("/logout")
