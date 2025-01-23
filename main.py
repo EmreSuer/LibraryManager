@@ -13,6 +13,7 @@ import csv
 from io import StringIO
 import json
 from werkzeug.wrappers import Response
+from collections import Counter
 
 # Load environment variables
 load_dotenv()
@@ -849,6 +850,69 @@ def import_books():
         return redirect(url_for('home'))
         
     return render_template('import_books.html')
+
+
+@app.route("/analytics")
+@login_required
+def analytics():
+    # Get all user's books
+    user_books = Book.query.filter_by(user_id=current_user.id).all()
+    
+    # Calculate total books
+    total_books = len(user_books)
+    
+    # Calculate average rating
+    rated_books = [book.rating for book in user_books if book.rating is not None]
+    average_rating = sum(rated_books) / len(rated_books) if rated_books else 0
+    
+    # Get genre distribution
+    genres = [book.genre for book in user_books]
+    genre_counter = Counter(genres)
+    
+    # Get top 5 genres for the pie chart
+    top_genres = dict(sorted(genre_counter.items(), key=lambda x: x[1], reverse=True)[:5])
+    genre_labels = list(top_genres.keys())
+    genre_data = list(top_genres.values())
+    
+    # Find most read genre
+    most_read_genre = max(genre_counter.items(), key=lambda x: x[1])[0] if genres else "N/A"
+    
+    # Calculate books per year
+    years_dict = {}
+    current_year = str(datetime.now().year)
+    books_this_year = 0
+    
+    for book in user_books:
+        if book.date_book_finished:
+            year = book.date_book_finished[-4:]  # Get year from MM/YYYY format
+            years_dict[year] = years_dict.get(year, 0) + 1
+            if year == current_year:
+                books_this_year += 1
+    
+    # Sort years and get data for the chart
+    years = sorted(years_dict.keys())
+    books_per_year = [years_dict[year] for year in years]
+    
+    # Get top rated books (top 5)
+    top_rated_books = (Book.query
+                      .filter_by(user_id=current_user.id)
+                      .filter(Book.rating.isnot(None))
+                      .order_by(Book.rating.desc())
+                      .limit(5)
+                      .all())
+    
+    return render_template(
+        "analytics.html",
+        total_books=total_books,
+        average_rating=average_rating,
+        most_read_genre=most_read_genre,
+        books_this_year=books_this_year,
+        years=years,
+        books_per_year=books_per_year,
+        genre_labels=genre_labels,
+        genre_data=genre_data,
+        top_rated_books=top_rated_books
+    )
 
 
 if __name__ == "__main__":

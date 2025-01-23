@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4" style="color: #e9ecef;">Library Analytics</h1>
+
+    <div class="row">
+        <!-- Books per Year Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Books Read by Year</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="booksPerYearChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Genre Distribution Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Genre Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="genreDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reading Stats -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Reading Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush bg-dark">
+                        <li class="list-group-item bg-dark text-light">
+                            Total Books: <span class="badge bg-primary">{{ total_books }}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light">
+                            Average Rating: <span class="badge bg-warning text-dark">{{ "%.1f"|format(average_rating) }}/10</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light">
+                            Most Read Genre: <span class="badge bg-success">{{ most_read_genre }}</span>
+                        </li>
+                        <li class="list-group-item bg-dark text-light">
+                            Books Read This Year: <span class="badge bg-info">{{ books_this_year }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Rated Books -->
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Rated Books</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group bg-dark">
+                        {% for book in top_rated_books %}
+                        <div class="list-group-item bg-dark text-light border-secondary">
+                            <h6 class="mb-1">{{ book.title }}</h6>
+                            <p class="mb-1">by {{ book.author }}</p>
+                            <small class="text-warning">
+                                <i class="fas fa-star"></i> {{ "%.1f"|format(book.rating) }}/10
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Books per Year Chart
+const booksPerYearCtx = document.getElementById('booksPerYearChart').getContext('2d');
+new Chart(booksPerYearCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ years|tojson }},
+        datasets: [{
+            label: 'Books Read',
+            data: {{ books_per_year|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                    color: '#e9ecef'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#e9ecef'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e9ecef'
+                }
+            }
+        }
+    }
+});
+
+// Genre Distribution Chart
+const genreCtx = document.getElementById('genreDistributionChart').getContext('2d');
+new Chart(genreCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ genre_labels|tojson }},
+        datasets: [{
+            data: {{ genre_data|tojson }},
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.5)',
+                'rgba(54, 162, 235, 0.5)',
+                'rgba(255, 206, 86, 0.5)',
+                'rgba(75, 192, 192, 0.5)',
+                'rgba(153, 102, 255, 0.5)',
+                'rgba(255, 159, 64, 0.5)',
+                'rgba(199, 199, 199, 0.5)',
+                'rgba(83, 102, 255, 0.5)',
+                'rgba(40, 159, 64, 0.5)',
+                'rgba(210, 199, 199, 0.5)',
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(199, 199, 199, 1)',
+                'rgba(83, 102, 255, 1)',
+                'rgba(40, 159, 64, 1)',
+                'rgba(210, 199, 199, 1)',
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    color: '#e9ecef'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 
